@@ -1,0 +1,60 @@
+plugins {
+    id 'application'
+    id 'io.micronaut.application' version '4.2.1'
+}
+
+group = 'com.example'
+version = '1.0.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Our messaging JARs (from provider project)
+    implementation files('libs/common.jar')
+    implementation files('libs/storage.jar')
+    implementation files('libs/network.jar')
+
+    // Micronaut
+    implementation 'io.micronaut:micronaut-inject'
+    implementation 'io.micronaut:micronaut-runtime'
+    implementation 'io.micronaut:micronaut-http-server-netty'
+    implementation 'io.micronaut:micronaut-http-client'
+    annotationProcessor 'io.micronaut:micronaut-inject-java'
+
+    // SQLite for metadata indexing
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+
+    // Jackson for JSON
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+    implementation 'io.micronaut:micronaut-jackson-databind'
+
+    // YAML support
+    runtimeOnly 'org.yaml:snakeyaml'
+
+    // Logging
+    implementation 'ch.qos.logback:logback-classic'
+
+    // Testing
+    testImplementation 'io.micronaut.test:micronaut-test-junit5'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+application {
+    mainClass = 'com.example.consumer.ConsumerApplication'
+}
+
+micronaut {
+    version = '4.2.1'
+    runtime(io.micronaut.gradle.MicronautRuntime.NETTY)
+}
+
+test {
+    useJUnitPlatform()
+}

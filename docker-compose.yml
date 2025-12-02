@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # Broker Service (from main provider project)
+  broker:
+    build:
+      context: ../provider/broker
+      dockerfile: Dockerfile
+    ports:
+      - "9092:9092"
+      - "8080:8080"
+    networks:
+      - messaging-network
+    volumes:
+      - broker-data:/app/data
+    environment:
+      - NODE_ID=broker-001
+      - DATA_DIR=/app/data
+
+  # Price Consumer
+  price-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    networks:
+      - messaging-network
+    depends_on:
+      - broker
+    volumes:
+      - price-consumer-data:/app/consumer-data
+    environment:
+      - CONSUMER_TYPE=price
+      - CONSUMER_TOPIC=price-topic
+      - CONSUMER_GROUP=price-group
+      - CONSUMER_PORT=8081
+      - CONSUMER_RETRY_POLICY=EXPONENTIAL_THEN_FIXED
+      - BROKER_HOST=broker
+      - BROKER_PORT=9092
+      - STORAGE_DATA_DIR=/app/consumer-data
+      - STORAGE_SEGMENT_SIZE=1000000
+
+  # Product Consumer
+  product-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    networks:
+      - messaging-network
+    depends_on:
+      - broker
+    volumes:
+      - product-consumer-data:/app/consumer-data
+    environment:
+      - CONSUMER_TYPE=product
+      - CONSUMER_TOPIC=product-topic
+      - CONSUMER_GROUP=product-group
+      - CONSUMER_PORT=8082
+      - CONSUMER_RETRY_POLICY=SKIP_ON_ERROR
+      - BROKER_HOST=broker
+      - BROKER_PORT=9092
+      - STORAGE_DATA_DIR=/app/consumer-data
+      - STORAGE_SEGMENT_SIZE=1000000
+
+  # Inventory Consumer
+  inventory-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    networks:
+      - messaging-network
+    depends_on:
+      - broker
+    volumes:
+      - inventory-consumer-data:/app/consumer-data
+    environment:
+      - CONSUMER_TYPE=inventory
+      - CONSUMER_TOPIC=inventory-topic
+      - CONSUMER_GROUP=inventory-group
+      - CONSUMER_PORT=8083
+      - CONSUMER_RETRY_POLICY=EXPONENTIAL_THEN_FIXED
+      - BROKER_HOST=broker
+      - BROKER_PORT=9092
+      - STORAGE_DATA_DIR=/app/consumer-data
+      - STORAGE_SEGMENT_SIZE=1000000
+
+  # Audit Consumer
+  audit-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    networks:
+      - messaging-network
+    depends_on:
+      - broker
+    volumes:
+      - audit-consumer-data:/app/consumer-data
+    environment:
+      - CONSUMER_TYPE=audit
+      - CONSUMER_TOPIC=audit-topic
+      - CONSUMER_GROUP=audit-group
+      - CONSUMER_PORT=8084
+      - CONSUMER_RETRY_POLICY=PAUSE_ON_ERROR
+      - BROKER_HOST=broker
+      - BROKER_PORT=9092
+      - STORAGE_DATA_DIR=/app/consumer-data
+      - STORAGE_SEGMENT_SIZE=1000000
+
+networks:
+  messaging-network:
+    driver: bridge
+
+volumes:
+  broker-data:
+  price-consumer-data:
+  product-consumer-data:
+  inventory-consumer-data:
+  audit-consumer-data:

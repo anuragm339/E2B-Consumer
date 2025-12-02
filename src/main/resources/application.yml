@@ -1,0 +1,37 @@
+micronaut:
+  application:
+    name: consumer-${CONSUMER_TYPE:unknown}
+  server:
+    port: ${CONSUMER_PORT:8080}
+
+consumer:
+  type: ${CONSUMER_TYPE:default}
+  topic: ${CONSUMER_TOPIC:default-topic}
+  group: ${CONSUMER_GROUP:default-group}
+  retry-policy: ${CONSUMER_RETRY_POLICY:EXPONENTIAL_THEN_FIXED}
+
+# Consumer's own storage configuration
+broker:
+  storage:
+    type: mmap
+    data-dir: ${STORAGE_DATA_DIR:/app/consumer-data}
+    segment-size: ${STORAGE_SEGMENT_SIZE:1073741824}  # 1GB
+
+# Placeholder storage configuration
+storage:
+  data-dir: ${STORAGE_DATA_DIR:/app/consumer-data}
+  segment-size: ${STORAGE_SEGMENT_SIZE:1000000}  # 1M records per segment
+
+# Broker connection
+messaging:
+  broker:
+    host: ${BROKER_HOST:localhost}
+    port: ${BROKER_PORT:9092}
+
+# Logging
+logger:
+  levels:
+    com.example.consumer: INFO
+    com.messaging: INFO
+    com.messaging.network.codec: DEBUG
+    io.netty: WARN
