@@ -15,11 +15,7 @@ import org.slf4j.LoggerFactory;
 public class ControlMessageHandler {
     private static final Logger log = LoggerFactory.getLogger(ControlMessageHandler.class);
 
-    @Inject
-    private ConsumerStorageService storageService;
 
-    @Inject
-    private SegmentMetadataService metadata;
 
     @Value("${consumer.type}")
     private String consumerType;
@@ -34,16 +30,12 @@ public class ControlMessageHandler {
         log.info("[{}] ========================================", consumerType);
 
         // Get stats before clearing
-        SegmentMetadataService.SegmentStats stats = metadata.getStats();
+
         log.info("[{}] Before RESET:", consumerType);
-        log.info("[{}]   - Segments: {}", consumerType, stats.segmentCount());
-        log.info("[{}]   - Records: {}", consumerType, stats.totalRecords());
-        log.info("[{}]   - Offset range: [{}, {}]", consumerType, stats.minOffset(), stats.maxOffset());
-        log.info("[{}]   - SQLite size: {} bytes ({} KB)",
-                 consumerType, stats.dbSizeBytes(), stats.dbSizeBytes() / 1024);
+
 
         // Clear segments AND SQLite metadata
-        storageService.clearAllData();
+
 
         log.info("[{}] Database cleared (segments + SQLite)", consumerType);
 
@@ -64,16 +56,9 @@ public class ControlMessageHandler {
         log.info("[{}] ========================================", consumerType);
 
         // Flush any pending segment metadata
-        storageService.flushCurrentSegment();
 
-        // Get stats after refresh
-        SegmentMetadataService.SegmentStats stats = metadata.getStats();
-        log.info("[{}] After refresh:", consumerType);
-        log.info("[{}]   - Segments: {}", consumerType, stats.segmentCount());
-        log.info("[{}]   - Records: {}", consumerType, stats.totalRecords());
-        log.info("[{}]   - Offset range: [{}, {}]", consumerType, stats.minOffset(), stats.maxOffset());
-        log.info("[{}]   - SQLite size: {} bytes ({} KB)",
-                 consumerType, stats.dbSizeBytes(), stats.dbSizeBytes() / 1024);
+
+
 
         // Send ACK
         sendAck(connection, readyMessage);

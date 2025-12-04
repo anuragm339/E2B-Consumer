@@ -2,7 +2,7 @@ micronaut:
   application:
     name: consumer-${CONSUMER_TYPE:unknown}
   server:
-    port: ${CONSUMER_PORT:8080}
+    port: ${CONSUMER_PORT:8081}
 
 consumer:
   type: ${CONSUMER_TYPE:default}

@@ -1,6 +1,6 @@
 package com.example.consumer;
 
-import com.example.consumer.service.ConsumerStorageService;
+
 import com.messaging.common.annotation.Consumer;
 import com.messaging.common.annotation.RetryPolicy;
 import com.messaging.common.api.MessageHandler;
@@ -18,15 +18,12 @@ import org.slf4j.LoggerFactory;
  */
 @Singleton
 @Consumer(
-    topic = "${CONSUMER_TOPIC:default-topic}",
-    group = "${CONSUMER_GROUP:default-group}"
+    topic = "${CONSUMER_TOPIC:price-topic}",
+    group = "${CONSUMER_GROUP:price-group}"
     // RetryPolicy will be set via RetryPolicyProvider
 )
 public class GenericConsumerHandler implements MessageHandler {
     private static final Logger log = LoggerFactory.getLogger(GenericConsumerHandler.class);
-
-    @Inject
-    private ConsumerStorageService storageService;
 
     @Value("${consumer.type}")
     private String consumerType;
@@ -44,7 +41,7 @@ public class GenericConsumerHandler implements MessageHandler {
 
     private void handleMessage(ConsumerRecord record) throws Exception {
         // Store MESSAGE in consumer's segments
-        storageService.storeMessage(record);
+
 
         // Process business logic specific to consumer type
         processBusinessLogic(record);
@@ -54,7 +51,7 @@ public class GenericConsumerHandler implements MessageHandler {
 
     private void handleDelete(ConsumerRecord record) throws Exception {
         // Store DELETE (tombstone) in consumer's segments
-        storageService.storeMessage(record);
+
 
         // Handle deletion logic
         handleDeletion(record.getMsgKey());

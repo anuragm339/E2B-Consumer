@@ -18,7 +18,6 @@ repositories {
 dependencies {
     // Our messaging JARs (from provider project)
     implementation files('libs/common.jar')
-    implementation files('libs/storage.jar')
     implementation files('libs/network.jar')
 
     // Micronaut
