@@ -28,8 +28,8 @@ public class ConsumerConnectionService implements ApplicationEventListener<Serve
     @Value("${messaging.broker.port}")
     private int brokerPort;
 
-    @Value("${consumer.topic}")
-    private String consumerTopic;
+    @Value("${consumer.topics}")
+    private String consumerTopics;  // Comma-separated list of topics
 
     @Value("${consumer.group}")
     private String consumerGroup;
@@ -75,27 +75,37 @@ public class ConsumerConnectionService implements ApplicationEventListener<Serve
 
     private void subscribe() {
         try {
-            log.info("[{}] Subscribing to topic: {}, group: {}", consumerType, consumerTopic, consumerGroup);
+            // Parse comma-separated topics
+            String[] topics = consumerTopics.split(",");
 
-            String payload = String.format("{\"topic\":\"%s\",\"group\":\"%s\"}",
-                                          consumerTopic, consumerGroup);
+            log.info("[{}] Subscribing to {} topic(s): {}, group: {}",
+                    consumerType, topics.length, consumerTopics, consumerGroup);
 
-            BrokerMessage subscribeMsg = new BrokerMessage(
-                BrokerMessage.MessageType.SUBSCRIBE,
-                System.currentTimeMillis(),
-                payload.getBytes(StandardCharsets.UTF_8)
-            );
+            // Subscribe to each topic
+            for (String topic : topics) {
+                topic = topic.trim();  // Remove any whitespace
 
-            connection.send(subscribeMsg).whenComplete((v, ex) -> {
-                if (ex != null) {
-                    log.error("[{}] Failed to send SUBSCRIBE", consumerType, ex);
-                } else {
-                    log.info("[{}] SUBSCRIBE sent successfully", consumerType);
-                }
-            });
+                String payload = String.format("{\"topic\":\"%s\",\"group\":\"%s\"}",
+                                              topic, consumerGroup);
+
+                BrokerMessage subscribeMsg = new BrokerMessage(
+                    BrokerMessage.MessageType.SUBSCRIBE,
+                    System.currentTimeMillis(),
+                    payload.getBytes(StandardCharsets.UTF_8)
+                );
+
+                final String currentTopic = topic;
+                connection.send(subscribeMsg).whenComplete((v, ex) -> {
+                    if (ex != null) {
+                        log.error("[{}] Failed to send SUBSCRIBE for topic: {}", consumerType, currentTopic, ex);
+                    } else {
+                        log.info("[{}] SUBSCRIBE sent successfully for topic: {}", consumerType, currentTopic);
+                    }
+                });
+            }
 
         } catch (Exception e) {
-            log.error("[{}] Error subscribing to topic", consumerType, e);
+            log.error("[{}] Error subscribing to topics", consumerType, e);
         }
     }
 

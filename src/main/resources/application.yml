@@ -6,7 +6,8 @@ micronaut:
 
 consumer:
   type: ${CONSUMER_TYPE:default}
-  topic: ${CONSUMER_TOPIC:default-topic}
+  # Support both CONSUMER_TOPICS (comma-separated) and legacy CONSUMER_TOPIC
+  topics: ${CONSUMER_TOPICS:${CONSUMER_TOPIC:default-topic}}
   group: ${CONSUMER_GROUP:default-group}
   retry-policy: ${CONSUMER_RETRY_POLICY:EXPONENTIAL_THEN_FIXED}
 

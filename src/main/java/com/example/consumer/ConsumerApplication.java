@@ -12,15 +12,18 @@ public class ConsumerApplication {
 
     public static void main(String[] args) {
         String consumerType = System.getenv().getOrDefault("CONSUMER_TYPE", "unknown");
-        String consumerTopic = System.getenv().getOrDefault("CONSUMER_TOPIC", "unknown");
+
+        // Support both CONSUMER_TOPICS (comma-separated) and legacy CONSUMER_TOPIC
+        String consumerTopics = System.getenv().getOrDefault("CONSUMER_TOPICS",
+                                System.getenv().getOrDefault("CONSUMER_TOPIC", "unknown"));
         String consumerPort = System.getenv().getOrDefault("CONSUMER_PORT", "8080");
 
         log.info("===================================================");
         log.info("     Starting Consumer Application");
         log.info("===================================================");
-        log.info("  Type:  {}", consumerType);
-        log.info("  Topic: {}", consumerTopic);
-        log.info("  Port:  {}", consumerPort);
+        log.info("  Type:   {}", consumerType);
+        log.info("  Topics: {}", consumerTopics);
+        log.info("  Port:   {}", consumerPort);
         log.info("===================================================");
 
         Micronaut.run(ConsumerApplication.class, args);
