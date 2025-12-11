@@ -2,7 +2,10 @@ package com.example.consumer.service;
 
 import com.example.consumer.GenericConsumerHandler;
 import com.messaging.common.model.BrokerMessage;
+import com.messaging.common.model.ConsumerRecord;
 import com.messaging.network.tcp.NettyTcpClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.runtime.server.event.ServerStartupEvent;
@@ -13,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -43,12 +47,18 @@ public class ConsumerConnectionService implements ApplicationEventListener<Serve
     @Inject
     private ControlMessageHandler controlHandler;
 
+    private final ObjectMapper objectMapper;
     private NettyTcpClient client;
     private NettyTcpClient.Connection connection;
 
+    public ConsumerConnectionService() {
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.findAndRegisterModules(); // Register JSR310 module for Java 8 date/time
+    }
+
     @Override
     public void onApplicationEvent(ServerStartupEvent event) {
-        log.info("[{}] Connecting to broker at {}:{}...", consumerType, brokerHost, brokerPort);
+        log.debug("[{}] Connecting to broker at {}:{}...", consumerType, brokerHost, brokerPort);
 
         try {
             // Create client and connect
@@ -116,8 +126,7 @@ public class ConsumerConnectionService implements ApplicationEventListener<Serve
 
             switch (message.getType()) {
                 case DATA:
-                    // TODO: Parse and handle data message
-                    log.info("[{}] Received DATA message", consumerType);
+                    handleDataMessage(message);
                     break;
 
                 case ACK:
@@ -141,14 +150,39 @@ public class ConsumerConnectionService implements ApplicationEventListener<Serve
         }
     }
 
+    /**
+     * Handle DATA message containing batch of consumer records
+     */
+    private void handleDataMessage(BrokerMessage message) {
+        try {
+            // Parse JSON payload as list of ConsumerRecords
+            String json = new String(message.getPayload(), StandardCharsets.UTF_8);
+
+            List<ConsumerRecord> records = objectMapper.readValue(
+                json,
+                new TypeReference<List<ConsumerRecord>>() {}
+            );
+
+            log.debug("[{}] Received batch of {} records", consumerType, records.size());
+
+            // Deliver batch to message handler
+            messageHandler.handleBatch(records);
+
+            log.debug("[{}] Successfully processed batch of {} records", consumerType, records.size());
+
+        } catch (Exception e) {
+            log.error("[{}] Error handling DATA message", consumerType, e);
+        }
+    }
+
     @PreDestroy
     public void shutdown() {
-        log.info("[{}] Shutting down consumer connection...", consumerType);
+        log.debug("[{}] Shutting down consumer connection...", consumerType);
 
         if (connection != null) {
             try {
                 connection.disconnect();
-                log.info("[{}] Connection closed", consumerType);
+                log.debug("[{}] Connection closed", consumerType);
             } catch (Exception e) {
                 log.error("[{}] Error closing connection", consumerType, e);
             }

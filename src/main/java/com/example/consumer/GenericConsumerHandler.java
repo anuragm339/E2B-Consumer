@@ -12,6 +12,8 @@ import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 /**
  * Generic consumer handler that adapts based on environment variables.
  * Single class handles all consumer types (price, product, inventory, etc.)
@@ -29,14 +31,20 @@ public class GenericConsumerHandler implements MessageHandler {
     private String consumerType;
 
     @Override
-    public void handle(ConsumerRecord record) throws Exception {
-        log.info("[{}] Received: type={}, key={}, createdAt={}",
-                 consumerType, record.getEventType(), record.getMsgKey(), record.getCreatedAt());
+    public void handleBatch(List<ConsumerRecord> records) throws Exception {
+        log.info("[{}] Received batch of {} records", consumerType, records.size());
 
-        switch (record.getEventType()) {
-            case MESSAGE -> handleMessage(record);
-            case DELETE -> handleDelete(record);
+        for (ConsumerRecord record : records) {
+            log.debug("[{}] Processing: type={}, key={}, createdAt={}",
+                     consumerType, record.getEventType(), record.getMsgKey(), record.getCreatedAt());
+
+            switch (record.getEventType()) {
+                case MESSAGE -> handleMessage(record);
+                case DELETE -> handleDelete(record);
+            }
         }
+
+        log.info("[{}] Successfully processed batch of {} records", consumerType, records.size());
     }
 
     private void handleMessage(ConsumerRecord record) throws Exception {
@@ -46,7 +54,7 @@ public class GenericConsumerHandler implements MessageHandler {
         // Process business logic specific to consumer type
         processBusinessLogic(record);
 
-        log.info("[{}] Processed MESSAGE: key={}", consumerType, record.getMsgKey());
+        //log.info("[{}] Processed MESSAGE: key={}", consumerType, record.getMsgKey());
     }
 
     private void handleDelete(ConsumerRecord record) throws Exception {
@@ -56,22 +64,14 @@ public class GenericConsumerHandler implements MessageHandler {
         // Handle deletion logic
         handleDeletion(record.getMsgKey());
 
-        log.info("[{}] Processed DELETE: key={}", consumerType, record.getMsgKey());
+        //log.info("[{}] Processed DELETE: key={}", consumerType, record.getMsgKey());
     }
 
     private void processBusinessLogic(ConsumerRecord record) {
         // Business logic specific to consumer type
         // E.g., price consumer might update price index
-        log.debug("[{}] Business logic for: {}", consumerType, record.getMsgKey());
+        log.debug("[{}] Business logic for: {}", consumerType,record.getEventType(), record.getMsgKey());
 
-        // Example type-specific logic:
-        switch (consumerType) {
-            case "price" -> processPriceUpdate(record);
-            case "product" -> processProductUpdate(record);
-            case "inventory" -> processInventoryUpdate(record);
-            case "audit" -> processAuditLog(record);
-            default -> log.debug("[{}] Generic processing", consumerType);
-        }
     }
 
     private void processPriceUpdate(ConsumerRecord record) {
