@@ -20,7 +20,7 @@ import java.util.List;
  */
 @Singleton
 @Consumer(
-    topic = "${CONSUMER_TOPIC:price-topic}",
+    topic = "${CONSUMER_TOPICS:price-topic}",
     group = "${CONSUMER_GROUP:price-group}"
     // RetryPolicy will be set via RetryPolicyProvider
 )
@@ -45,6 +45,22 @@ public class GenericConsumerHandler implements MessageHandler {
         }
 
         log.info("[{}] Successfully processed batch of {} records", consumerType, records.size());
+    }
+
+    @Override
+    public void onReset(String topic) throws Exception {
+        log.info("[{}] ===== GOT RESET for topic: {} ===== Performing cleanup operations...", consumerType, topic);
+        // Clear caches, reset state, prepare for refreshed data
+        // Example: cache.clear();
+        log.info("[{}] Cleanup complete for topic: {}, ready to receive fresh data", consumerType, topic);
+    }
+
+    @Override
+    public void onReady(String topic) throws Exception {
+        log.info("[{}] ===== GOT READY for topic: {} ===== Performing finalization operations...", consumerType, topic);
+        // Rebuild indexes, validate data, finalize processing
+        // Example: rebuildIndexes();
+        log.info("[{}] Finalization complete for topic: {}, data refresh complete", consumerType, topic);
     }
 
     private void handleMessage(ConsumerRecord record) throws Exception {

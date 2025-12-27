@@ -20,6 +20,7 @@ dependencies {
     // Our messaging JARs (from provider project)
     implementation files('libs/common.jar')
     implementation files('libs/network.jar')
+    implementation files('libs/client.jar')
 
     // Micronaut
     implementation 'io.micronaut:micronaut-inject'
