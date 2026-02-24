@@ -29,6 +29,12 @@ dependencies {
     implementation 'io.micronaut:micronaut-http-client'
     annotationProcessor 'io.micronaut:micronaut-inject-java'
 
+    // Metrics - Prometheus & Micrometer
+    implementation 'io.micronaut.micrometer:micronaut-micrometer-core'
+    implementation 'io.micronaut.micrometer:micronaut-micrometer-registry-prometheus'
+    implementation 'io.micrometer:micrometer-core'
+    implementation 'io.micronaut:micronaut-management'
+
     // SQLite for metadata indexing
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
 

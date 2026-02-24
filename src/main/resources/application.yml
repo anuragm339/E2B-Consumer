@@ -3,6 +3,16 @@ micronaut:
     name: consumer-${CONSUMER_TYPE:unknown}
   server:
     port: ${CONSUMER_PORT:8081}
+  metrics:
+    enabled: true
+
+endpoints:
+  prometheus:
+    enabled: true
+    sensitive: false
+  metrics:
+    enabled: true
+    sensitive: false
 
 consumer:
   type: ${CONSUMER_TYPE:default}

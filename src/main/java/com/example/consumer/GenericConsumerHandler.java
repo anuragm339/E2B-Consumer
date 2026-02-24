@@ -30,37 +30,48 @@ public class GenericConsumerHandler implements MessageHandler {
     @Value("${consumer.type}")
     private String consumerType;
 
+    private int recordCount=0;
+
     @Override
     public void handleBatch(List<ConsumerRecord> records) throws Exception {
-        log.info("[{}] Received batch of {} records", consumerType, records.size());
 
-        for (ConsumerRecord record : records) {
-            log.debug("[{}] Processing: type={}, key={}, createdAt={}",
-                     consumerType, record.getEventType(), record.getMsgKey(), record.getCreatedAt());
+        recordCount+=records.size();
 
-            switch (record.getEventType()) {
-                case MESSAGE -> handleMessage(record);
-                case DELETE -> handleDelete(record);
-            }
+        // CRITICAL DEBUG: Log EVERY batch received with detailed information
+        // This helps diagnose data refresh metric discrepancies by tracking actual deliveries
+        if (!records.isEmpty()) {
+            // Calculate approximate batch size (rough estimate based on average message size)
+            long estimatedBytes = records.stream()
+                .mapToLong(r -> {
+                    long size = r.getMsgKey().length();
+                    if (r.getData() != null) {
+                        size += r.getData().length();
+                    }
+                    return size + 32; // Add overhead for metadata
+                })
+                .sum();
+
+            // Log batch reception (offset and topic not exposed to consumer)
+            log.info("📦 [{}] BATCH_RECEIVED messages={}, estimatedBytes={}, cumulativeCount={}, firstKey={}, lastKey={}",
+                     consumerType, records.size(), estimatedBytes, recordCount,
+                     records.get(0).getMsgKey(), records.get(records.size() - 1).getMsgKey());
         }
 
-        log.info("[{}] Successfully processed batch of {} records", consumerType, records.size());
+        log.info("[{}] Successfully processed batch of {} records", consumerType, recordCount);
     }
 
     @Override
     public void onReset(String topic) throws Exception {
-        log.info("[{}] ===== GOT RESET for topic: {} ===== Performing cleanup operations...", consumerType, topic);
         // Clear caches, reset state, prepare for refreshed data
         // Example: cache.clear();
-        log.info("[{}] Cleanup complete for topic: {}, ready to receive fresh data", consumerType, topic);
+        recordCount=0;
+        log.info("[{}] Cleanup complete for topic: {}, ready to receive fresh data reseting count to {}", consumerType, topic);
     }
 
     @Override
     public void onReady(String topic) throws Exception {
-        log.info("[{}] ===== GOT READY for topic: {} ===== Performing finalization operations...", consumerType, topic);
-        // Rebuild indexes, validate data, finalize processing
-        // Example: rebuildIndexes();
-        log.info("[{}] Finalization complete for topic: {}, data refresh complete", consumerType, topic);
+        log.info("[{}] ===== GOT READY for topic: {} ===== Performing finalization operations... with total records {}", consumerType, topic,recordCount);
+
     }
 
     private void handleMessage(ConsumerRecord record) throws Exception {
