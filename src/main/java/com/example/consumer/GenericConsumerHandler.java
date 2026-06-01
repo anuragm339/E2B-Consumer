@@ -1,24 +1,32 @@
 package com.example.consumer;
 
 
+import com.example.consumer.store.ReceivedMessageStore;
 import com.messaging.common.annotation.Consumer;
 import com.messaging.common.annotation.RetryPolicy;
 import com.messaging.common.api.MessageHandler;
 import com.messaging.common.model.ConsumerRecord;
 import com.messaging.common.model.EventType;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Generic consumer handler that adapts based on environment variables.
  * Single class handles all consumer types (price, product, inventory, etc.)
+ *
+ * NOTE: This handler is DISABLED when consumer.legacy.enabled=true
+ * In legacy mode, LegacyConsumerService handles message consumption instead.
  */
 @Singleton
+@Requires(property = "consumer.legacy.enabled", notEquals = "true")
 @Consumer(
     topic = "${CONSUMER_TOPICS:price-topic}",
     group = "${CONSUMER_GROUP:price-group}"
@@ -30,12 +38,34 @@ public class GenericConsumerHandler implements MessageHandler {
     @Value("${consumer.type}")
     private String consumerType;
 
+    @Value("${consumer.topics:default-topic}")
+    private String topic;
+
+    @Value("${consumer.group:default-group}")
+    private String group;
+
+    @Inject
+    private ReceivedMessageStore receivedMessageStore;
+
     private int recordCount=0;
 
     @Override
     public void handleBatch(List<ConsumerRecord> records) throws Exception {
 
         recordCount+=records.size();
+
+        // Persist every received msgKey to SQLite for verification
+        if (!records.isEmpty()) {
+            List<String> keys       = new ArrayList<>(records.size());
+            List<String> types      = new ArrayList<>(records.size());
+            List<Instant> createdAts = new ArrayList<>(records.size());
+            for (ConsumerRecord r : records) {
+                keys.add(r.getMsgKey());
+                types.add(r.getEventType() != null ? r.getEventType().name() : null);
+                createdAts.add(r.getCreatedAt());
+            }
+            receivedMessageStore.storeBatch(topic, group, keys, types, createdAts);
+        }
 
         // CRITICAL DEBUG: Log EVERY batch received with detailed information
         // This helps diagnose data refresh metric discrepancies by tracking actual deliveries
