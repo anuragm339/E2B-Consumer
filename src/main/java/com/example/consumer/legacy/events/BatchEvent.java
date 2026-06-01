@@ -65,7 +65,7 @@ public class BatchEvent extends EventWithOffset {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean isConsumable(String serviceName, List<String> messageTypes) {
+    public Boolean isConsumable(String serviceName, List<String> messageTypes) {
         return events.stream()
                 .filter(e -> e instanceof MessageEvent)
                 .map(e -> ((MessageEvent<Message>) e).getPayload())

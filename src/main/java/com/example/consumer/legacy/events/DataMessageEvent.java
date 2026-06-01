@@ -42,7 +42,7 @@ public class DataMessageEvent extends MessageEvent<DataMessage> {
     }
 
     @Override
-    public boolean isConsumable(String serviceName, List<String> messageTypes) {
+    public Boolean isConsumable(String serviceName, List<String> messageTypes) {
         return messageTypes.contains(payloadType());
     }
 }

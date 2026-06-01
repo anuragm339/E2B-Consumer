@@ -22,7 +22,7 @@ public abstract class GlobalEvent extends Event {
     }
 
     @Override
-    public boolean isConsumable(String serviceName, List<String> messageTypes) {
+    public Boolean isConsumable(String serviceName, List<String> messageTypes) {
         return this.serviceName.equals(serviceName);
     }
 

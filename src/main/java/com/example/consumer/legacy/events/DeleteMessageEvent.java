@@ -34,7 +34,7 @@ public class DeleteMessageEvent extends MessageEvent<DeleteMessage> {
     }
 
     @Override
-    public boolean isConsumable(String serviceName, List<String> messageTypes) {
+    public Boolean isConsumable(String serviceName, List<String> messageTypes) {
         return messageTypes.contains(payloadType());
     }
 }
